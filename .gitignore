@@ -9,7 +9,7 @@ webview-ui/dist/
 # VS Code specific
 .vscode/
 .vscode-test/
-*.vsix
+# *.vsix
 
 # Logs
 npm-debug.log*
