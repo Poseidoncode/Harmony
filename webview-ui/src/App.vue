@@ -1,6 +1,9 @@
 <template>
   <div class="container">
-    <h1>Harmony Prompts</h1>
+    <div class="header">
+        <h1>Harmony Prompts</h1>
+        <button class="icon-btn" @click="openSettings" title="Manage Templates">⚙️</button>
+    </div>
     <div class="search-box">
         <input type="text" v-model="searchQuery" placeholder="Search templates..." />
     </div>
@@ -181,6 +184,10 @@ const copyToClipboard = () => {
     });
 };
 
+const openSettings = () => {
+    vscode.postMessage({ type: 'open-templates-file' });
+};
+
 onMounted(() => {
     // Listen for messages from the extension
     window.addEventListener('message', event => {
@@ -218,13 +225,40 @@ body {
     box-sizing: border-box;
 }
 
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
 h1 {
     font-size: 1.1rem;
     font-weight: 600;
-    margin: 0 0 16px 0;
+    margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     opacity: 0.9;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    flex: 0 0 auto;
+}
+
+.icon-btn:hover {
+    opacity: 1;
 }
 
 .search-box input {

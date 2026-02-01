@@ -58,6 +58,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             });
             break;
         }
+        case 'open-templates-file': {
+            const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
+            vscode.window.showTextDocument(templatesUri);
+            break;
+        }
       }
     });
   }
