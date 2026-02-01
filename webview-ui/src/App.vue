@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, nextTick } from 'vue';
+import { ref, computed, reactive, onMounted, onUnmounted, nextTick } from 'vue';
 
 // --- Types ---
 interface Field {
@@ -230,19 +230,26 @@ const openSettings = () => {
     vscode.postMessage({ type: 'open-templates-file' });
 };
 
+// Message Handler
+const handleMessage = (event: MessageEvent) => {
+    const message = event.data;
+    switch (message.type) {
+        case 'update-templates':
+            templates.value = message.value;
+            break;
+    }
+};
+
 onMounted(() => {
     // Listen for messages from the extension
-    window.addEventListener('message', event => {
-        const message = event.data;
-        switch (message.type) {
-            case 'update-templates':
-                templates.value = message.value;
-                break;
-        }
-    });
+    window.addEventListener('message', handleMessage);
 
     // Request initial templates
     vscode.postMessage({ type: 'get-templates' });
+});
+
+onUnmounted(() => {
+    window.removeEventListener('message', handleMessage);
 });
 
 </script>
@@ -288,9 +295,9 @@ h1 {
     border: none;
     color: var(--vscode-foreground);
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 0.9rem;
     padding: 4px;
-    opacity: 0.7;
+    opacity: 0.6;
     transition: opacity 0.2s;
     display: flex;
     align-items: center;
