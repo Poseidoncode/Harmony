@@ -47,7 +47,18 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 editor.edit(editBuilder => {
                     editBuilder.insert(editor.selection.active, data.value);
                 });
+                break;
             }
+
+            const terminal = vscode.window.activeTerminal;
+            if (terminal) {
+                terminal.sendText(data.value, false); // false means don't hit enter
+                break;
+            }
+
+            // If neither editor nor terminal is active, fallback to clipboard and notify user
+            await vscode.env.clipboard.writeText(data.value);
+            vscode.window.showWarningMessage('No active editor or terminal found. The prompt has been copied to your clipboard!');
             break;
         }
         case 'get-templates': {
@@ -55,6 +66,22 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             webviewView.webview.postMessage({
                 type: 'update-templates',
                 value: templates
+            });
+            break;
+        }
+        case 'sendToChat': {
+            // "Chat (Run)" - Auto submit behavior
+            vscode.commands.executeCommand('workbench.action.chat.open', {
+                query: data.value
+            });
+            break;
+        }
+        case 'sendToChatDraft': {
+            // "Chat (Draft)" - Attempt to just fill the input
+            // Using isPartialQuery: true is a known way to signal "incomplete input" to some internal handlers
+            vscode.commands.executeCommand('workbench.action.chat.open', {
+                query: data.value,
+                isPartialQuery: true
             });
             break;
         }

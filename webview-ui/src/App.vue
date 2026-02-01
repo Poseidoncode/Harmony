@@ -87,8 +87,10 @@
         </div>
 
         <div class="actions">
-            <button class="primary-btn" @click="generateAndInsert">Insert to Editor</button>
-            <button class="secondary-btn" @click="copyToClipboard">Copy</button>
+            <button class="primary-btn" @click="generateAndInsert" title="Insert into active editor">Insert</button>
+            <button class="chat-btn" @click="sendToChat" title="Send to Chat and run">Chat ▶</button>
+            <button class="chat-draft-btn" @click="sendToChatDraft" title="Fill Chat input only">Chat ✎</button>
+            <button class="secondary-btn" @click="copyToClipboard" title="Copy to clipboard">Copy</button>
         </div>
 
         <div class="preview">
@@ -171,6 +173,20 @@ const selectTemplate = (t: Template) => {
 const generateAndInsert = () => {
     vscode.postMessage({
         type: 'insertText',
+        value: generatedPrompt.value
+    });
+};
+
+const sendToChat = () => {
+    vscode.postMessage({
+        type: 'sendToChat',
+        value: generatedPrompt.value
+    });
+};
+
+const sendToChatDraft = () => {
+    vscode.postMessage({
+        type: 'sendToChatDraft',
         value: generatedPrompt.value
     });
 };
@@ -386,6 +402,32 @@ button:hover {
 .primary-btn {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
+}
+
+.chat-btn {
+    background: var(--vscode-statusBarItem-remoteBackground, #1677ff);
+    color: var(--vscode-statusBarItem-remoteForeground, white);
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.chat-draft-btn {
+    background: var(--vscode-button-secondaryBackground, #5f6368);
+    color: var(--vscode-button-secondaryForeground, white);
+    border: none;
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 500;
+    transition: filter 0.2s;
+}
+.chat-draft-btn:hover {
+    filter: brightness(1.2);
 }
 
 .secondary-btn {
