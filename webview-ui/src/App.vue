@@ -44,6 +44,7 @@
             <!-- Textarea -->
             <textarea 
                 v-if="field.type === 'textarea'" 
+                :ref="(el) => setFocusRef(el, field.name)"
                 v-model="formData[field.name]"
                 :placeholder="field.placeholder"
                 rows="4"
@@ -102,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue';
+import { ref, computed, reactive, onMounted, nextTick } from 'vue';
 
 // --- Types ---
 interface Field {
@@ -132,6 +133,7 @@ const searchQuery = ref('');
 const selectedTemplate = ref<Template | null>(null);
 const formData = reactive<Record<string, string>>({});
 const templates = ref<Template[]>([]);
+const fieldRefs = new Map<string, HTMLElement>();
 
 // --- Computed ---
 const filteredTemplates = computed(() => {
@@ -157,8 +159,16 @@ const generatedPrompt = computed(() => {
 });
 
 // --- Methods ---
+const setFocusRef = (el: any, name: string) => {
+    if (el) {
+        fieldRefs.set(name, el);
+    }
+};
+
 const selectTemplate = (t: Template) => {
     selectedTemplate.value = t;
+    fieldRefs.clear(); // Clear old refs
+    
     // Reset form data with default values
     Object.keys(formData).forEach(k => delete formData[k]);
     t.fields.forEach(f => {
@@ -166,6 +176,22 @@ const selectTemplate = (t: Template) => {
              formData[f.name] = f.defaultValue === 'true' ? (f.checkedValue || 'true') : (f.uncheckedValue || '');
         } else {
              formData[f.name] = f.defaultValue || '';
+        }
+    });
+
+    // Auto-focus logic
+    nextTick(() => {
+        // Priority 1: Field named 'code'
+        const codeField = fieldRefs.get('code');
+        if (codeField) {
+            codeField.focus();
+            return;
+        }
+        
+        // Priority 2: First textarea
+        const firstTextarea = Array.from(fieldRefs.values()).find(el => el.tagName === 'TEXTAREA');
+        if (firstTextarea) {
+            firstTextarea.focus();
         }
     });
 };
@@ -416,18 +442,19 @@ button:hover {
 }
 
 .chat-draft-btn {
-    background: var(--vscode-button-secondaryBackground, #5f6368);
-    color: var(--vscode-button-secondaryForeground, white);
-    border: none;
+    background: #fdf5e6; /* OldLace - 溫潤的米白色 */
+    color: #5d4037;    /* 深咖啡色文字，與米色最搭 */
+    border: 1px solid #d7ccc8;
     flex: 1;
     padding: 10px;
     border-radius: var(--radius);
     cursor: pointer;
-    font-weight: 500;
-    transition: filter 0.2s;
+    font-weight: 600;
+    transition: all 0.2s;
 }
 .chat-draft-btn:hover {
-    filter: brightness(1.2);
+    background: #f5f5dc; /* Beige - 懸停時稍微加深 */
+    filter: brightness(0.95);
 }
 
 .secondary-btn {
