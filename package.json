@@ -1,0 +1,65 @@
+{
+  "name": "harmony-prompt-assistant",
+  "displayName": "Harmony Prompt Assistant",
+  "description": "VS Code Prompt Assistant Extension using Vue 3",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "harmony-sidebar-view",
+          "title": "Harmony Prompts",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "harmony-sidebar-view": [
+        {
+          "type": "webview",
+          "id": "harmony-sidebar",
+          "name": "Harmony Assistant",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "harmony-prompt-assistant.helloWorld",
+        "title": "Hello World"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "build:webview": "vite build",
+    "package": "npm run build:webview && npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "eslint": "^8.45.0",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.5",
+    "vue-tsc": "^1.8.6"
+  },
+  "dependencies": {
+    "vue": "^3.3.4"
+  }
+}
