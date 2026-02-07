@@ -2,7 +2,10 @@
   <div class="container">
     <div class="header">
         <h1>Harmony Prompts</h1>
-        <button class="icon-btn" @click="openSettings" title="Manage Templates">⚙️</button>
+        <div class="header-actions">
+            <button class="icon-btn" @click="refreshTemplates" title="Refresh Templates">🔄</button>
+            <button class="icon-btn" @click="openSettings" title="Manage Templates">⚙️</button>
+        </div>
     </div>
     <div class="search-box">
         <input type="text" v-model="searchQuery" placeholder="Search templates..." />
@@ -230,6 +233,10 @@ const openSettings = () => {
     vscode.postMessage({ type: 'open-templates-file' });
 };
 
+const refreshTemplates = () => {
+    vscode.postMessage({ type: 'get-templates' });
+};
+
 // Message Handler
 const handleMessage = (event: MessageEvent) => {
     const message = event.data;
@@ -279,6 +286,11 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 4px;
 }
 
 h1 {

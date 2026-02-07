@@ -25,6 +25,22 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
+    // Auto-reload templates when templates.json is saved
+    const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
+    const fileWatcher = vscode.workspace.onDidSaveTextDocument(async (doc) => {
+      if (doc.uri.fsPath === templatesUri.fsPath) {
+        const templates = await this._getTemplates();
+        webviewView.webview.postMessage({
+          type: 'update-templates',
+          value: templates
+        });
+      }
+    });
+
+    webviewView.onDidDispose(() => {
+      fileWatcher.dispose();
+    });
+
     webviewView.webview.onDidReceiveMessage(async (data) => {
       switch (data.type) {
         case 'onInfo': {
