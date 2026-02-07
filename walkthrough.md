@@ -1,35 +1,26 @@
-# Walkthrough - 新增列表懸停刪除功能
+# Walkthrough - 刪除功能優化與 Replace All 修復
 
-本文件紀錄了「實作列表懸停刪除功能」的變更細節與驗證結果。
+本文件紀錄了移除刪除確認視窗以及修復「Replace All」功能顯示問題的變更細節。
 
 ## 變更摘要
 
-### Webview UI (Vue 3)
-- **新增刪除按鈕**: 在 `template-item` 中加入垃圾桶圖示 (`🗑️`)。
-- **懸停顯示邏輯**: 透過 CSS `opacity` 實作，按鈕僅在滑鼠懸停於該項資料時顯現，平時保持隱藏以維持介面清爽。
-- **事件冒泡阻斷**: 使用 `@click.stop` 確保點擊刪除按鈕時，不會錯誤地觸發「進入詳細頁」的動作。
-- **樣式優化**: 
-    - 為列表項加入 `position: relative` 進行絕對定位。
-    - 調整內距以防止文字與按鈕重疊。
-    - 加入 VS Code 風格的錯誤顏色 (`--vscode-errorForeground`) 與懸停背景色。
+### 1. 移除刪除確認 (Task 1)
+- **修改檔案**: `src/SidebarProvider.ts`
+- **變更內容**: 
+    - 移除了 `delete-template` 訊息處理器中的 `vscode.window.showWarningMessage` 邏輯。
+    - 現在點擊刪除按鈕後，系統將直接從 `templates.json` 移除該模板，不再跳出詢問視窗。
+- **目的**: 提升管理效率，符合使用者「直接刪除就好」的需求。
 
-### Extension 邏輯 (TypeScript)
-- **新增訊息處理器**: 在 `SidebarProvider.ts` 中實作 `delete-template` 分支。
-- **安全確認對話框**: 點擊刪除後會彈出 VS Code 原生警告視窗 (`showWarningMessage`)，要求使用者確認是否刪除。
-- **檔案系統同步**: 
-    - 確認後從 `resources/templates.json` 移除對應資料。
-    - 使用 `vscode.workspace.fs.writeFile` 進行原子化寫入。
-    - 自動推播更新後的資料回 Webview，確保介面立即同步。
+### 2. 修復 Replace All 功能 (Task 2)
+- **問題分析**: 使用者反應「Replace All」後似乎沒有完全取代。經分析，可能是因為 Webview 在更新數據後仍保留了舊的搜尋字串或選取狀態，導致視覺上的誤導。
+- **解決方案**:
+    - **Extension (`src/SidebarProvider.ts`)**: 在 `import-replace` 完成後，發送訊息時額外帶入 `isFullReplace: true` 旗標。
+    - **Webview (`webview-ui/src/App.vue`)**: 收到 `isFullReplace` 旗標時，強制將 `selectedTemplate` 設為 `null` 並清空 `searchQuery`。
+- **目的**: 確保在進行完整取代操作後，介面會完全重置，讓使用者看到乾淨的新模板列表。
 
-## 驗證結果
-- **編譯狀態**:
-    - Webview (Vite): `✓ built`
-    - Extension (tsc): `Success`
-- **功能行為**:
-    - [x] Hover 時出現 🗑️。
-    - [x] 點擊 🗑️ 出現確認視窗。
-    - [x] 取消刪除：資料保留。
-    - [x] 確認刪除：資料消失，JSON 檔案同步更新。
+## 驗證建議
+- **刪除測試**: 懸停在任意模板上並點擊 🗑️，模板應立即消失並彈出成功提示，無須確認。
+- **取代測試**: 使用「Replace All」(📄) 功能匯入新的 JSON 檔案。匯入後，介面應自動回到列表頂端，搜尋框應清空，且舊有的模板不應出現在列表中。
 
 ## 結論
-此功能提升了管理模板的效率，讓使用者無需手動修改 JSON 檔案即可完成快速刪除操作。
+本次變更優化了模板管理的流暢度，並解決了資料取代時的視圖同步問題。

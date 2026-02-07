@@ -106,35 +106,102 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             vscode.window.showTextDocument(templatesUri);
             break;
         }
+        case 'import-replace': {
+            const options: vscode.OpenDialogOptions = {
+                canSelectMany: false,
+                openLabel: 'Replace Templates',
+                filters: {
+                    'JSON files': ['json']
+                }
+            };
+
+            const fileUri = await vscode.window.showOpenDialog(options);
+            if (fileUri && fileUri[0]) {
+                try {
+                    const newContent = await vscode.workspace.fs.readFile(fileUri[0]);
+                    const jsonStr = new TextDecoder('utf-8').decode(newContent);
+                    const newTemplates = JSON.parse(jsonStr);
+
+                    if (!Array.isArray(newTemplates)) {
+                        throw new Error('Imported data must be an array of templates.');
+                    }
+
+                    const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
+                    await vscode.workspace.fs.writeFile(templatesUri, Buffer.from(JSON.stringify(newTemplates, null, 2), 'utf8'));
+                    
+                    webviewView.webview.postMessage({
+                        type: 'update-templates',
+                        value: newTemplates,
+                        isFullReplace: true
+                    });
+                    vscode.window.showInformationMessage('Templates replaced successfully!');
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to replace templates: ${error}`);
+                }
+            }
+            break;
+        }
+        case 'import-append': {
+            const options: vscode.OpenDialogOptions = {
+                canSelectMany: false,
+                openLabel: 'Import & Prepend Templates',
+                filters: {
+                    'JSON files': ['json']
+                }
+            };
+
+            const fileUri = await vscode.window.showOpenDialog(options);
+            if (fileUri && fileUri[0]) {
+                try {
+                    const newContent = await vscode.workspace.fs.readFile(fileUri[0]);
+                    const jsonStr = new TextDecoder('utf-8').decode(newContent);
+                    const newTemplates = JSON.parse(jsonStr);
+
+                    if (!Array.isArray(newTemplates)) {
+                        throw new Error('Imported data must be an array of templates.');
+                    }
+
+                    const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
+                    const existingTemplates = await this._getTemplates();
+                    
+                    // Prepend new templates
+                    const updatedTemplates = [...newTemplates, ...existingTemplates];
+
+                    await vscode.workspace.fs.writeFile(templatesUri, Buffer.from(JSON.stringify(updatedTemplates, null, 2), 'utf8'));
+                    
+                    webviewView.webview.postMessage({
+                        type: 'update-templates',
+                        value: updatedTemplates
+                    });
+                    vscode.window.showInformationMessage(`${newTemplates.length} templates imported and prepended!`);
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to import templates: ${error}`);
+                }
+            }
+            break;
+        }
         case 'delete-template': {
             if (!data.value || !data.value.id) {
                 return;
             }
             const { id, name } = data.value;
-            const answer = await vscode.window.showWarningMessage(
-                `Are you sure you want to delete the template "${name}"?`,
-                'Delete'
-            );
-
-            if (answer === 'Delete') {
-                try {
-                    const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
-                    const templates = await this._getTemplates();
-                    const updatedTemplates = templates.filter((t: any) => t.id !== id);
-                    
-                    const fileData = Buffer.from(JSON.stringify(updatedTemplates, null, 2), 'utf8');
-                    await vscode.workspace.fs.writeFile(templatesUri, fileData);
-                    
-                    // Manually notify webview as fs.writeFile might not trigger onDidSaveTextDocument
-                    webviewView.webview.postMessage({
-                        type: 'update-templates',
-                        value: updatedTemplates
-                    });
-                    
-                    vscode.window.showInformationMessage(`Template "${name}" deleted.`);
-                } catch (error) {
-                    vscode.window.showErrorMessage(`Failed to delete template: ${error}`);
-                }
+            try {
+                const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
+                const templates = await this._getTemplates();
+                const updatedTemplates = templates.filter((t: any) => t.id !== id);
+                
+                const fileData = Buffer.from(JSON.stringify(updatedTemplates, null, 2), 'utf8');
+                await vscode.workspace.fs.writeFile(templatesUri, fileData);
+                
+                // Manually notify webview as fs.writeFile might not trigger onDidSaveTextDocument
+                webviewView.webview.postMessage({
+                    type: 'update-templates',
+                    value: updatedTemplates
+                });
+                
+                vscode.window.showInformationMessage(`Template "${name}" deleted.`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to delete template: ${error}`);
             }
             break;
         }

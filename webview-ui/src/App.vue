@@ -1,8 +1,10 @@
 <template>
   <div class="container">
     <div class="header">
-        <h1>Harmony Prompts</h1>
+        <h1>Prompts</h1>
         <div class="header-actions">
+            <button class="icon-btn" @click="importReplace" title="Replace all with new JSON">📄</button>
+            <button class="icon-btn" @click="importAppend" title="Import & Prepend JSON">📥</button>
             <button class="icon-btn" @click="refreshTemplates" title="Refresh Templates">🔄</button>
             <button class="icon-btn" @click="openSettings" title="Manage Templates">⚙️</button>
         </div>
@@ -236,6 +238,14 @@ const openSettings = () => {
     vscode.postMessage({ type: 'open-templates-file' });
 };
 
+const importReplace = () => {
+    vscode.postMessage({ type: 'import-replace' });
+};
+
+const importAppend = () => {
+    vscode.postMessage({ type: 'import-append' });
+};
+
 const refreshTemplates = () => {
     vscode.postMessage({ type: 'get-templates' });
 };
@@ -253,6 +263,13 @@ const handleMessage = (event: MessageEvent) => {
     switch (message.type) {
         case 'update-templates':
             templates.value = message.value;
+            
+            if (message.isFullReplace) {
+                selectedTemplate.value = null;
+                searchQuery.value = '';
+                return;
+            }
+
             // Sync selected template if it exists
             if (selectedTemplate.value) {
                 const updated = templates.value.find(t => t.id === selectedTemplate.value?.id);
