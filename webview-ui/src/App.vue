@@ -26,7 +26,7 @@
                 <div class="template-name">{{ template.name }}</div>
                 <div class="template-desc">{{ template.description }}</div>
             </div>
-            <button class="delete-btn" @click.stop="confirmDelete(template)" title="Delete Template">🗑️</button>
+            <button class="delete-btn" @click.stop.prevent="confirmDelete(template)" title="Delete Template">🗑️</button>
         </div>
     </div>
 
@@ -407,6 +407,7 @@ h1 {
     border-radius: var(--radius);
     color: var(--vscode-errorForeground);
     flex: 0 0 auto;
+    z-index: 10;
 }
 
 .template-item:hover .delete-btn {

@@ -107,10 +107,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             break;
         }
         case 'delete-template': {
+            if (!data.value || !data.value.id) {
+                return;
+            }
             const { id, name } = data.value;
             const answer = await vscode.window.showWarningMessage(
                 `Are you sure you want to delete the template "${name}"?`,
-                { modal: true },
                 'Delete'
             );
 
