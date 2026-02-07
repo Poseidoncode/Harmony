@@ -5,9 +5,41 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   _view?: vscode.WebviewView;
   _doc?: vscode.TextDocument;
 
-  constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(private readonly _context: vscode.ExtensionContext) {}
 
-  public resolveWebviewView(
+  private get _extensionUri(): vscode.Uri {
+    return this._context.extensionUri;
+  }
+
+  private async _getTemplatesUri(): Promise<vscode.Uri> {
+    const storageUri = this._context.globalStorageUri;
+    const templatesUri = vscode.Uri.joinPath(storageUri, 'templates.json');
+    
+    // Ensure directory exists
+    try {
+      await vscode.workspace.fs.createDirectory(storageUri);
+    } catch (e) {
+      // Ignore if exists
+    }
+
+    // Check if templates.json exists in storage
+    try {
+      await vscode.workspace.fs.stat(templatesUri);
+    } catch (e) {
+      // If not, copy from extension resources
+      const defaultTemplatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
+      try {
+        const defaultData = await vscode.workspace.fs.readFile(defaultTemplatesUri);
+        await vscode.workspace.fs.writeFile(templatesUri, defaultData);
+      } catch (err) {
+        console.error('Failed to copy default templates:', err);
+      }
+    }
+
+    return templatesUri;
+  }
+
+  public async resolveWebviewView(
     webviewView: vscode.WebviewView,
     context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
@@ -26,7 +58,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     // Auto-reload templates when templates.json is saved
-    const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
+    const templatesUri = await this._getTemplatesUri();
     const fileWatcher = vscode.workspace.onDidSaveTextDocument(async (doc) => {
       if (doc.uri.fsPath === templatesUri.fsPath) {
         const templates = await this._getTemplates();
@@ -42,6 +74,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     });
 
     webviewView.webview.onDidReceiveMessage(async (data) => {
+      const currentTemplatesUri = await this._getTemplatesUri();
       switch (data.type) {
         case 'onInfo': {
           if (!data.value) {
@@ -102,8 +135,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             break;
         }
         case 'open-templates-file': {
-            const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
-            vscode.window.showTextDocument(templatesUri);
+            vscode.window.showTextDocument(currentTemplatesUri);
             break;
         }
         case 'import-replace': {
@@ -126,8 +158,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                         throw new Error('Imported data must be an array of templates.');
                     }
 
-                    const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
-                    await vscode.workspace.fs.writeFile(templatesUri, Buffer.from(JSON.stringify(newTemplates, null, 2), 'utf8'));
+                    await vscode.workspace.fs.writeFile(currentTemplatesUri, Buffer.from(JSON.stringify(newTemplates, null, 2), 'utf8'));
                     
                     webviewView.webview.postMessage({
                         type: 'update-templates',
@@ -161,13 +192,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                         throw new Error('Imported data must be an array of templates.');
                     }
 
-                    const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
                     const existingTemplates = await this._getTemplates();
                     
                     // Prepend new templates
                     const updatedTemplates = [...newTemplates, ...existingTemplates];
 
-                    await vscode.workspace.fs.writeFile(templatesUri, Buffer.from(JSON.stringify(updatedTemplates, null, 2), 'utf8'));
+                    await vscode.workspace.fs.writeFile(currentTemplatesUri, Buffer.from(JSON.stringify(updatedTemplates, null, 2), 'utf8'));
                     
                     webviewView.webview.postMessage({
                         type: 'update-templates',
@@ -186,12 +216,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             }
             const { id, name } = data.value;
             try {
-                const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
                 const templates = await this._getTemplates();
                 const updatedTemplates = templates.filter((t: any) => t.id !== id);
                 
                 const fileData = Buffer.from(JSON.stringify(updatedTemplates, null, 2), 'utf8');
-                await vscode.workspace.fs.writeFile(templatesUri, fileData);
+                await vscode.workspace.fs.writeFile(currentTemplatesUri, fileData);
                 
                 // Manually notify webview as fs.writeFile might not trigger onDidSaveTextDocument
                 webviewView.webview.postMessage({
@@ -215,7 +244,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
   private async _getTemplates(): Promise<any[]> {
       try {
-          const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
+          const templatesUri = await this._getTemplatesUri();
           const fileData = await vscode.workspace.fs.readFile(templatesUri);
           const jsonStr = new TextDecoder('utf-8').decode(fileData);
           return JSON.parse(jsonStr);

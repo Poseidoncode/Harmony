@@ -4,7 +4,7 @@ import { SidebarProvider } from './SidebarProvider';
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Harmony Prompt Assistant is now active!');
 
-	const sidebarProvider = new SidebarProvider(context.extensionUri);
+	const sidebarProvider = new SidebarProvider(context);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(
 			"harmony-sidebar",

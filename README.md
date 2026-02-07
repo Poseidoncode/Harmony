@@ -37,5 +37,6 @@ code --install-extension harmony-prompt-assistant-0.0.1.vsix
 ```
 
 ## 功能特色
-- **自動同步**: 編輯並儲存 `resources/templates.json` 後，Sidebar 會自動刷新，無需重啟。
+- **自動同步**: 透過擴充功能介面開啟並編輯儲存模板檔案後，Sidebar 會自動刷新，無需重啟。
+- **持久化儲存**: 您的模板現在儲存在 VS Code 的全域儲存空間中，擴充功能更新後仍會保留。
 - **快速插入**: 提供多種模板，支援直接插入編輯器或發送到 GitHub Copilot Chat。
