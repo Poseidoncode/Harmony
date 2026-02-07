@@ -106,6 +106,36 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             vscode.window.showTextDocument(templatesUri);
             break;
         }
+        case 'delete-template': {
+            const { id, name } = data.value;
+            const answer = await vscode.window.showWarningMessage(
+                `Are you sure you want to delete the template "${name}"?`,
+                { modal: true },
+                'Delete'
+            );
+
+            if (answer === 'Delete') {
+                try {
+                    const templatesUri = vscode.Uri.joinPath(this._extensionUri, 'resources', 'templates.json');
+                    const templates = await this._getTemplates();
+                    const updatedTemplates = templates.filter((t: any) => t.id !== id);
+                    
+                    const fileData = Buffer.from(JSON.stringify(updatedTemplates, null, 2), 'utf8');
+                    await vscode.workspace.fs.writeFile(templatesUri, fileData);
+                    
+                    // Manually notify webview as fs.writeFile might not trigger onDidSaveTextDocument
+                    webviewView.webview.postMessage({
+                        type: 'update-templates',
+                        value: updatedTemplates
+                    });
+                    
+                    vscode.window.showInformationMessage(`Template "${name}" deleted.`);
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to delete template: ${error}`);
+                }
+            }
+            break;
+        }
       }
     });
   }

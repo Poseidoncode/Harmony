@@ -22,8 +22,11 @@
             class="template-item"
             @click="selectTemplate(template)"
         >
-            <div class="template-name">{{ template.name }}</div>
-            <div class="template-desc">{{ template.description }}</div>
+            <div class="template-info">
+                <div class="template-name">{{ template.name }}</div>
+                <div class="template-desc">{{ template.description }}</div>
+            </div>
+            <button class="delete-btn" @click.stop="confirmDelete(template)" title="Delete Template">🗑️</button>
         </div>
     </div>
 
@@ -237,12 +240,41 @@ const refreshTemplates = () => {
     vscode.postMessage({ type: 'get-templates' });
 };
 
+const confirmDelete = (t: Template) => {
+    vscode.postMessage({ 
+        type: 'delete-template', 
+        value: { id: t.id, name: t.name } 
+    });
+};
+
 // Message Handler
 const handleMessage = (event: MessageEvent) => {
     const message = event.data;
     switch (message.type) {
         case 'update-templates':
             templates.value = message.value;
+            // Sync selected template if it exists
+            if (selectedTemplate.value) {
+                const updated = templates.value.find(t => t.id === selectedTemplate.value?.id);
+                if (updated) {
+                    selectedTemplate.value = updated;
+                    
+                    // Ensure formData has all keys from the updated template
+                    // but keep existing values to avoid losing user input
+                    updated.fields.forEach(f => {
+                        if (formData[f.name] === undefined) {
+                            if (f.type === 'checkbox') {
+                                formData[f.name] = f.defaultValue === 'true' ? (f.checkedValue || 'true') : (f.uncheckedValue || '');
+                            } else {
+                                formData[f.name] = f.defaultValue || '';
+                            }
+                        }
+                    });
+                } else {
+                    // If the template was removed from the source, go back to list view
+                    selectedTemplate.value = null;
+                }
+            }
             break;
     }
 };
@@ -348,6 +380,42 @@ h1 {
     border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.2s;
+    position: relative;
+}
+
+.template-info {
+    padding-right: 28px;
+}
+
+.delete-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    color: var(--vscode-errorForeground);
+    flex: 0 0 auto;
+}
+
+.template-item:hover .delete-btn {
+    opacity: 0.4;
+}
+
+.delete-btn:hover {
+    opacity: 1 !important;
+    background: var(--vscode-toolbar-hoverBackground);
 }
 
 .template-item:hover {
