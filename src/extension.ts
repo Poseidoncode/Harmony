@@ -8,7 +8,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(
 			"harmony-sidebar",
-			sidebarProvider
+			sidebarProvider,
+			{
+				webviewOptions: {
+					retainContextWhenHidden: true,
+				},
+			}
 		)
 	);
 

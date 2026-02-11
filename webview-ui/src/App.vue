@@ -111,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue';
 
 // --- Types ---
 interface Field {
@@ -133,15 +133,31 @@ interface Template {
     fields: Field[];
 }
 
+interface AppState {
+    searchQuery?: string;
+    selectedTemplateId?: string | null;
+    formData?: Record<string, string>;
+}
+
 // --- VS Code API ---
 const vscode = (window as any).acquireVsCodeApi();
 
 // --- Data ---
-const searchQuery = ref('');
+const previousState = vscode.getState() as AppState || {};
+const searchQuery = ref(previousState.searchQuery || '');
 const selectedTemplate = ref<Template | null>(null);
-const formData = reactive<Record<string, string>>({});
+const formData = reactive<Record<string, string>>(previousState.formData || {});
 const templates = ref<Template[]>([]);
 const fieldRefs = new Map<string, HTMLElement>();
+
+// --- State Persistence ---
+watch([searchQuery, selectedTemplate, formData], () => {
+    vscode.setState({
+        searchQuery: searchQuery.value,
+        selectedTemplateId: selectedTemplate.value?.id || null,
+        formData: { ...formData }
+    });
+}, { deep: true });
 
 // --- Computed ---
 const filteredTemplates = computed(() => {
@@ -271,8 +287,11 @@ const handleMessage = (event: MessageEvent) => {
             }
 
             // Sync selected template if it exists
-            if (selectedTemplate.value) {
-                const updated = templates.value.find(t => t.id === selectedTemplate.value?.id);
+            const state = vscode.getState() as AppState || {};
+            const targetId = selectedTemplate.value?.id || state.selectedTemplateId;
+            
+            if (targetId) {
+                const updated = templates.value.find(t => t.id === targetId);
                 if (updated) {
                     selectedTemplate.value = updated;
                     
