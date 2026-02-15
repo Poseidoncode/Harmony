@@ -1,0 +1,17 @@
+.vscode/**
+.vscode-test/**
+out/test/**
+src/**
+webview-ui/**
+node_modules/**
+tsconfig.json
+vite.config.ts
+Makefile
+.eslintrc.json
+*.vsix
+.gemini/**
+my_log.md
+gemini-conversation-*.json
+walkthrough.md
+example-template/**
+# resources/templates.json  <-- Keep this to provide default templates

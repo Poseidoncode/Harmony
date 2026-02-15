@@ -57,6 +57,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
+    // Notify webview when it becomes visible to handle auto-focus
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        webviewView.webview.postMessage({ type: 'view-visible' });
+      }
+    });
+
     // Auto-reload templates when templates.json is saved
     const templatesUri = await this._getTemplatesUri();
     const fileWatcher = vscode.workspace.onDidSaveTextDocument(async (doc) => {

@@ -47,6 +47,7 @@
                 v-model="formData[field.name]" 
                 :placeholder="field.placeholder"
                 class="vs-input"
+                @focus="lastFocusedField = field.name"
             />
             
             <!-- Textarea -->
@@ -57,6 +58,7 @@
                 :placeholder="field.placeholder"
                 rows="4"
                 class="vs-input"
+                @focus="lastFocusedField = field.name"
             ></textarea>
             
             <!-- Select -->
@@ -64,6 +66,7 @@
                 v-if="field.type === 'select'" 
                 v-model="formData[field.name]"
                 class="vs-select"
+                @focus="lastFocusedField = field.name"
             >
                 <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
             </select>
@@ -137,6 +140,7 @@ interface AppState {
     searchQuery?: string;
     selectedTemplateId?: string | null;
     formData?: Record<string, string>;
+    lastFocusedField?: string | null;
 }
 
 // --- VS Code API ---
@@ -147,15 +151,17 @@ const previousState = vscode.getState() as AppState || {};
 const searchQuery = ref(previousState.searchQuery || '');
 const selectedTemplate = ref<Template | null>(null);
 const formData = reactive<Record<string, string>>(previousState.formData || {});
+const lastFocusedField = ref<string | null>(previousState.lastFocusedField || null);
 const templates = ref<Template[]>([]);
 const fieldRefs = new Map<string, HTMLElement>();
 
 // --- State Persistence ---
-watch([searchQuery, selectedTemplate, formData], () => {
+watch([searchQuery, selectedTemplate, formData, lastFocusedField], () => {
     vscode.setState({
         searchQuery: searchQuery.value,
         selectedTemplateId: selectedTemplate.value?.id || null,
-        formData: { ...formData }
+        formData: { ...formData },
+        lastFocusedField: lastFocusedField.value
     });
 }, { deep: true });
 
@@ -189,9 +195,34 @@ const setFocusRef = (el: any, name: string) => {
     }
 };
 
+const applyFocus = () => {
+    nextTick(() => {
+        if (lastFocusedField.value) {
+            const el = fieldRefs.get(lastFocusedField.value);
+            if (el) {
+                el.focus();
+                return;
+            }
+        }
+        
+        // Fallback to priority logic if no lastFocusedField or element not found
+        const codeField = fieldRefs.get('code');
+        if (codeField) {
+            codeField.focus();
+            return;
+        }
+        
+        const firstTextarea = Array.from(fieldRefs.values()).find(el => el.tagName === 'TEXTAREA');
+        if (firstTextarea) {
+            firstTextarea.focus();
+        }
+    });
+};
+
 const selectTemplate = (t: Template) => {
     selectedTemplate.value = t;
     fieldRefs.clear(); // Clear old refs
+    lastFocusedField.value = null; // Reset saved focus for new template
     
     // Reset form data with default values
     Object.keys(formData).forEach(k => delete formData[k]);
@@ -203,21 +234,7 @@ const selectTemplate = (t: Template) => {
         }
     });
 
-    // Auto-focus logic
-    nextTick(() => {
-        // Priority 1: Field named 'code'
-        const codeField = fieldRefs.get('code');
-        if (codeField) {
-            codeField.focus();
-            return;
-        }
-        
-        // Priority 2: First textarea
-        const firstTextarea = Array.from(fieldRefs.values()).find(el => el.tagName === 'TEXTAREA');
-        if (firstTextarea) {
-            firstTextarea.focus();
-        }
-    });
+    applyFocus();
 };
 
 const generateAndInsert = () => {
@@ -277,6 +294,9 @@ const confirmDelete = (t: Template) => {
 const handleMessage = (event: MessageEvent) => {
     const message = event.data;
     switch (message.type) {
+        case 'view-visible':
+            applyFocus();
+            break;
         case 'update-templates':
             templates.value = message.value;
             
@@ -306,6 +326,9 @@ const handleMessage = (event: MessageEvent) => {
                             }
                         }
                     });
+
+                    // If we just restored the template on load, try to restore focus too
+                    applyFocus();
                 } else {
                     // If the template was removed from the source, go back to list view
                     selectedTemplate.value = null;
