@@ -1,42 +1,35 @@
 # Harmony Prompt Assistant
 
-一個基於 Vue 3 的 VS Code 提示詞助手擴充功能。
+A VS Code Prompt Assistant Extension based on Vue 3.
 
-## 開發指南
+[繁體中文版](./README.zh-TW.md)
 
-### 1. 安裝依賴
-```bash
-npm install
-```
+---
 
-### 2. 本地開發
-在 VS Code 中按下 `F5` 即可啟動偵錯模式，這會開啟一個包含此擴充功能的「擴充功能開發主機」視窗。
+## Usage Guide (English)
 
-- **持續編譯 TypeScript**: `npm run watch`
-- **編譯 Webview**: `npm run build:webview`
+### 1. Open Harmony
+Click the **Harmony icon** in the VS Code Activity Bar to open the sidebar.
 
-### 3. 執行測試
-此指令會自動編譯程式碼、執行語法檢查 (Lint)，並啟動自動化測試：
-```bash
-npm test
-```
+### 2. Template Management
+- **Edit Templates**: Click the **"Edit Templates"** button. This opens the `templates.json` file. Any changes saved here will automatically sync to the sidebar.
+- **Import/Replace**: Use the **"Import (Replace)"** button to load a new set of templates from a JSON file.
+- **Import/Append**: Use the **"Import (Append)"** button to add templates from a JSON file to your existing list.
+- **Delete**: Click the trash icon next to a template to remove it.
 
-## 打包與發佈
+### 3. Prompt Actions
+- **Insert**: Click on a template name to insert its content directly into your active editor or terminal.
+- **Chat (Run)**: Send the prompt directly to **GitHub Copilot Chat** and execute it immediately.
+- **Chat (Draft)**: Fill the prompt into the **Copilot Chat** input box as a draft without executing.
 
-### 打包成 .vsix 檔案
-使用 `vsce` 工具將擴充功能打包，以便手動安裝或分享：
-```bash
-npx @vscode/vsce package
-```
-*這會執行 `npm run package`，自動包含編譯後的 Webview 與擴充功能主體。*
+---
 
-### 手動安裝
-打包完成後，可以使用以下指令安裝：
-```bash
-code --install-extension harmony-prompt-assistant-0.0.1.vsix
-```
+## Features
+- **Auto Sync**: Opening and editing the template file through the extension UI will automatically refresh the Sidebar without a restart.
+- **Persistent Storage**: Your templates are stored in VS Code's Global Storage, ensuring they persist even after extension updates.
+- **Quick Insertion**: Provides various templates with support for direct insertion into the editor or sending to GitHub Copilot Chat.
 
-## 功能特色
-- **自動同步**: 透過擴充功能介面開啟並編輯儲存模板檔案後，Sidebar 會自動刷新，無需重啟。
-- **持久化儲存**: 您的模板現在儲存在 VS Code 的全域儲存空間中，擴充功能更新後仍會保留。
-- **快速插入**: 提供多種模板，支援直接插入編輯器或發送到 GitHub Copilot Chat。
+---
+
+## Contributing
+If you are a developer and want to contribute to this project, please check our [Contributing Guide](./CONTRIBUTING.md) for technical instructions.
