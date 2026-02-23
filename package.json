@@ -13,13 +13,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Infinity/Harmony.git"
+    "url": "https://github.com/Poseidoncode/Harmony.git"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Infinity/Harmony/issues"
+    "url": "https://github.com/Poseidoncode/Harmony/issues"
   },
-  "homepage": "https://github.com/Infinity/Harmony#readme",
+  "homepage": "https://github.com/Poseidoncode/Harmony#readme",
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
