@@ -65,13 +65,13 @@
     "@types/vscode": "^1.80.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "@vitejs/plugin-vue": "^4.2.3",
+    "@vitejs/plugin-vue": "^6.0.4",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^8.45.0",
     "glob": "^13.0.0",
     "mocha": "^11.7.5",
     "typescript": "^5.1.6",
-    "vite": "^4.4.5",
+    "vite": "^7.3.1",
     "vue-tsc": "^1.8.6"
   },
   "dependencies": {
